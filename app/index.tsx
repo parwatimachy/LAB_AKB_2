@@ -15,7 +15,7 @@ type ImageItem = {
   alt: string;
 };
 
-// Gambar utama
+// Gambar utama dan alternatif
 const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/1546166/pexels-photo-1546166.jpeg',
   'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg',
@@ -28,7 +28,6 @@ const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg',
 ];
 
-// Gambar alternatif
 const ALT_IMAGES: string[] = [
   'https://images.pexels.com/photos/221540/pexels-photo-221540.jpeg',
   'https://images.pexels.com/photos/415687/pexels-photo-415687.jpeg',
@@ -41,7 +40,7 @@ const ALT_IMAGES: string[] = [
   'https://images.pexels.com/photos/213399/pexels-photo-213399.jpeg',
 ];
 
-// Gabungkan jadi daftar objek
+// Gabungkan menjadi array objek
 const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   id: index.toString(),
   main,
@@ -55,7 +54,10 @@ const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
 
   const handlePress = () => {
     setUseAlt(!useAlt);
-    setScale((prev) => (prev < 2 ? prev * 1.2 : 1));
+    setScale(prev => {
+      const nextScale = prev * 1.2;
+      return nextScale > 2 ? 1 : nextScale;
+    });
   };
 
   return (
@@ -72,8 +74,7 @@ const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
 // Komponen utama
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height;
-  const itemSize = Math.min(screenWidth, screenHeight) / 3; // agar tetap 3x3
+  const itemSize = screenWidth / 3; // 3 kolom tetap
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
   gridItem: {
     backgroundColor: '#222',
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#333',
   },
   imageWrapper: {
     flex: 1,
@@ -111,5 +112,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+    borderRadius: 4,
   },
 });
