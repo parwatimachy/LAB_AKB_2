@@ -10,6 +10,7 @@ import {
   Text,
 } from 'react-native';
 
+// Tipe data untuk gambar
 type ImageItem = {
   id: string;
   main: string;
@@ -46,40 +47,44 @@ const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   alt: ALT_IMAGES[index],
 }));
 
+// Komponen satu gambar
 const GridImage: React.FC<{ item: ImageItem; size: number }> = ({ item, size }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
   const [error, setError] = useState(false);
 
   const handlePress = () => {
-    setUseAlt(prev => !prev);
-    setScale(prev => {
-      const next = parseFloat((prev * 1.2).toFixed(2));
-      return next > 2 ? 2 : next;
+    setUseAlt((prev) => !prev);
+    setScale((prev) => {
+      const newScale = parseFloat((prev * 1.2).toFixed(2));
+      return newScale > 2 ? 1 : newScale; // Batas maksimum 2x, lalu reset
     });
+    setError(false); // Reset error saat coba gambar lagi
   };
 
-  const handleError = () => setError(true);
+  const onError = () => {
+    setError(true);
+  };
 
   return (
     <TouchableOpacity onPress={handlePress} style={{ width: size, height: size }}>
       {error ? (
-        <View style={[styles.image, { width: size, height: size }]}>
-          <Text style={styles.errorText}>Gagal Memuat</Text>
+        <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{ color: 'white', fontSize: 12 }}>Gagal dimuat</Text>
         </View>
       ) : (
         <Image
           source={{ uri: useAlt ? item.alt : item.main }}
+          onError={onError}
           style={[
             styles.image,
             {
+              transform: [{ scale }],
               width: size,
               height: size,
-              transform: [{ scale }],
             },
           ]}
           resizeMode="cover"
-          onError={handleError}
         />
       )}
     </TouchableOpacity>
@@ -97,7 +102,6 @@ const App: React.FC = () => {
         numColumns={3}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <GridImage item={item} size={itemSize} />}
-        scrollEnabled={false}
         contentContainerStyle={styles.grid}
       />
     </SafeAreaView>
@@ -112,20 +116,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
   },
   grid: {
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    alignItems: 'center',
   },
   image: {
     borderWidth: 1,
     borderColor: '#333',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#eee',
-    fontSize: 12,
-    textAlign: 'center',
+    borderRadius: 6,
+    backgroundColor: '#222',
   },
 });
