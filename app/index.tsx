@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Dimensions,
   StyleSheet,
+  FlatList,
 } from 'react-native';
 
 // Tipe data untuk satu item gambar
@@ -15,7 +16,7 @@ type ImageItem = {
   alt: string;
 };
 
-// Gambar utama dan alternatif
+// Gambar utama dan alternatif (9+9 = 18 gambar total)
 const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/1546166/pexels-photo-1546166.jpeg',
   'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg',
@@ -40,24 +41,21 @@ const ALT_IMAGES: string[] = [
   'https://images.pexels.com/photos/213399/pexels-photo-213399.jpeg',
 ];
 
-// Gabungkan menjadi array objek
+// Gabungkan menjadi objek
 const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   id: index.toString(),
   main,
   alt: ALT_IMAGES[index],
 }));
 
-// Komponen gambar individual
+// Komponen individual gambar
 const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
 
   const handlePress = () => {
-    setUseAlt(!useAlt);
-    setScale(prev => {
-      const nextScale = prev * 1.2;
-      return nextScale > 2 ? 1 : nextScale;
-    });
+    setUseAlt((prev) => !prev);
+    setScale((prev) => (prev < 2 ? parseFloat((prev * 1.2).toFixed(2)) : 1));
   };
 
   return (
@@ -74,17 +72,21 @@ const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
 // Komponen utama
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3; // 3 kolom tetap
+  const itemSize = screenWidth / 3;
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.grid}>
-        {IMAGE_LIST.map((item) => (
-          <View key={item.id} style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
+      <FlatList
+        data={IMAGE_LIST}
+        numColumns={3}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
             <GridImage item={item} />
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={styles.grid}
+      />
     </SafeAreaView>
   );
 };
@@ -98,8 +100,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   gridItem: {
     backgroundColor: '#222',
