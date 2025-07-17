@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Image,
-  Text,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView,
   Dimensions,
   StyleSheet,
-  Animated,
+  FlatList,
+  Text,
 } from 'react-native';
 
 type ImageItem = {
@@ -47,66 +46,55 @@ const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   alt: ALT_IMAGES[index],
 }));
 
-const GridImage: React.FC<{ item: ImageItem; size: number; index: number }> = ({ item, size, index }) => {
+const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
   const [error, setError] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const handlePress = () => {
-    setUseAlt((prev) => !prev);
-    setScale((prev) => {
-      const next = prev * 1.2;
-      return next > 2 ? 1 : parseFloat(next.toFixed(2));
-    });
+    setUseAlt(prev => !prev);
+    setScale(prev => (prev < 2 ? parseFloat((prev * 1.2).toFixed(2)) : 1));
   };
 
-  useEffect(() => {
-    fadeAnim.setValue(0);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  }, [useAlt, error]);
+  const handleError = () => setError(true);
+
+  if (error) {
+    return (
+      <View style={styles.imageWrapper}>
+        <Text style={styles.errorText}>Gagal memuat gambar</Text>
+      </View>
+    );
+  }
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      style={[styles.imageWrapper, { width: size, height: size }]}
-    >
-      <View style={styles.labelContainer}>
-        <Text style={styles.labelText}>Gambar {index + 1}</Text>
-      </View>
-      {!error ? (
-        <Animated.Image
-          source={{ uri: useAlt ? item.alt : item.main }}
-          style={[styles.image, { transform: [{ scale }], opacity: fadeAnim }]}
-          resizeMode="cover"
-          onError={() => setError(true)}
-        />
-      ) : (
-        <View style={[styles.image, styles.errorImage]}>
-          <Text style={styles.errorText}>Gagal Memuat</Text>
-        </View>
-      )}
+    <TouchableOpacity onPress={handlePress} style={styles.imageWrapper}>
+      <Image
+        source={{ uri: useAlt ? item.alt : item.main }}
+        style={[styles.image, { transform: [{ scale }] }]}
+        resizeMode="cover"
+        onError={handleError}
+      />
     </TouchableOpacity>
   );
 };
 
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3 - 12;
+  const itemSize = screenWidth / 3;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollArea}>
-        <View style={styles.grid}>
-          {IMAGE_LIST.map((item, index) => (
-            <GridImage key={item.id} item={item} size={itemSize} index={index} />
-          ))}
-        </View>
-      </ScrollView>
+      <FlatList
+        data={IMAGE_LIST}
+        numColumns={3}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
+            <GridImage item={item} />
+          </View>
+        )}
+        contentContainerStyle={styles.grid}
+      />
     </SafeAreaView>
   );
 };
@@ -118,48 +106,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#111',
   },
-  scrollArea: {
+  grid: {
+    justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+  gridItem: {
+    borderWidth: 1,
+    borderColor: '#333',
+    backgroundColor: '#222',
   },
   imageWrapper: {
-    margin: 6,
-    borderRadius: 10,
-    backgroundColor: '#222',
-    overflow: 'hidden',
-    position: 'relative',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
-  },
-  errorImage: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#444',
+    borderRadius: 4,
   },
   errorText: {
-    color: '#fff',
+    color: '#ccc',
     fontSize: 12,
-  },
-  labelContainer: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    zIndex: 1,
-  },
-  labelText: {
-    color: '#fff',
-    fontSize: 12,
+    textAlign: 'center',
+    padding: 5,
   },
 });
