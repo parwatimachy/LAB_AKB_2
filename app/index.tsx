@@ -9,14 +9,14 @@ import {
   FlatList,
 } from 'react-native';
 
-// Tipe data untuk satu item gambar
+// Tipe data
 type ImageItem = {
   id: string;
   main: string;
   alt: string;
 };
 
-// Gambar utama dan alternatif (9+9)
+// Daftar gambar utama dan alternatif (9+9)
 const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/1546166/pexels-photo-1546166.jpeg',
   'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg',
@@ -41,28 +41,31 @@ const ALT_IMAGES: string[] = [
   'https://images.pexels.com/photos/213399/pexels-photo-213399.jpeg',
 ];
 
-// Gabungkan menjadi objek
+// Gabungkan menjadi array objek
 const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   id: index.toString(),
   main,
   alt: ALT_IMAGES[index],
 }));
 
-// Komponen gambar individual
-const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
+// Komponen individual untuk satu gambar
+const GridImage: React.FC<{ item: ImageItem; size: number }> = ({ item, size }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
 
   const handlePress = () => {
-    setUseAlt(prev => !prev);
-    setScale(prev => {
-      const nextScale = parseFloat((prev * 1.2).toFixed(2));
-      return nextScale <= 2 ? nextScale : 1;
+    setUseAlt((prev) => !prev);
+    setScale((prev) => {
+      const newScale = parseFloat((prev * 1.2).toFixed(2));
+      return newScale <= 2.0 ? newScale : 1;
     });
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.imageWrapper}>
+    <TouchableOpacity
+      onPress={handlePress}
+      style={[styles.imageWrapper, { width: size, height: size }]}
+    >
       <Image
         source={{ uri: useAlt ? item.alt : item.main }}
         style={[styles.image, { transform: [{ scale }] }]}
@@ -75,20 +78,15 @@ const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
 // Komponen utama
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const spacing = 8;
-  const itemSize = (screenWidth - spacing * 4) / 3;
+  const itemSize = screenWidth / 3;
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={IMAGE_LIST}
-        numColumns={3}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={[styles.gridItem, { width: itemSize, height: itemSize, margin: spacing / 2 }]}>
-            <GridImage item={item} />
-          </View>
-        )}
+        numColumns={3}
+        renderItem={({ item }) => <GridImage item={item} size={itemSize} />}
         contentContainerStyle={styles.grid}
       />
     </SafeAreaView>
@@ -106,15 +104,10 @@ const styles = StyleSheet.create({
   grid: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
-  },
-  gridItem: {
-    backgroundColor: '#222',
-    borderRadius: 6,
-    overflow: 'hidden',
+    paddingVertical: 10,
   },
   imageWrapper: {
-    flex: 1,
+    padding: 2,
   },
   image: {
     width: '100%',
