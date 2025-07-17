@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Image,
+  Text,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
   Dimensions,
   StyleSheet,
-  FlatList,
+  Animated,
 } from 'react-native';
 
-// Tipe data
 type ImageItem = {
   id: string;
   main: string;
   alt: string;
 };
 
-// Daftar gambar utama dan alternatif (9+9)
 const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/1546166/pexels-photo-1546166.jpeg',
   'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg',
@@ -41,77 +41,125 @@ const ALT_IMAGES: string[] = [
   'https://images.pexels.com/photos/213399/pexels-photo-213399.jpeg',
 ];
 
-// Gabungkan menjadi array objek
 const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   id: index.toString(),
   main,
   alt: ALT_IMAGES[index],
 }));
 
-// Komponen individual untuk satu gambar
-const GridImage: React.FC<{ item: ImageItem; size: number }> = ({ item, size }) => {
+const GridImage: React.FC<{ item: ImageItem; size: number; index: number }> = ({ item, size, index }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
+  const [error, setError] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const handlePress = () => {
     setUseAlt((prev) => !prev);
     setScale((prev) => {
-      const newScale = parseFloat((prev * 1.2).toFixed(2));
-      return newScale <= 2.0 ? newScale : 1;
+      const next = prev * 1.2;
+      return next > 2 ? 1 : parseFloat(next.toFixed(2));
     });
   };
+
+  useEffect(() => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [useAlt, error]);
 
   return (
     <TouchableOpacity
       onPress={handlePress}
       style={[styles.imageWrapper, { width: size, height: size }]}
     >
-      <Image
-        source={{ uri: useAlt ? item.alt : item.main }}
-        style={[styles.image, { transform: [{ scale }] }]}
-        resizeMode="cover"
-      />
+      <View style={styles.labelContainer}>
+        <Text style={styles.labelText}>Gambar {index + 1}</Text>
+      </View>
+      {!error ? (
+        <Animated.Image
+          source={{ uri: useAlt ? item.alt : item.main }}
+          style={[styles.image, { transform: [{ scale }], opacity: fadeAnim }]}
+          resizeMode="cover"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <View style={[styles.image, styles.errorImage]}>
+          <Text style={styles.errorText}>Gagal Memuat</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
 
-// Komponen utama
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3;
+  const itemSize = screenWidth / 3 - 12;
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={IMAGE_LIST}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        renderItem={({ item }) => <GridImage item={item} size={itemSize} />}
-        contentContainerStyle={styles.grid}
-      />
+      <ScrollView contentContainerStyle={styles.scrollArea}>
+        <View style={styles.grid}>
+          {IMAGE_LIST.map((item, index) => (
+            <GridImage key={item.id} item={item} size={itemSize} index={index} />
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 export default App;
 
-// Gaya
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#111',
   },
-  grid: {
-    justifyContent: 'center',
+  scrollArea: {
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 20,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   imageWrapper: {
-    padding: 2,
+    margin: 6,
+    borderRadius: 10,
+    backgroundColor: '#222',
+    overflow: 'hidden',
+    position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 6,
+    borderRadius: 10,
+  },
+  errorImage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#444',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  labelContainer: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 1,
+  },
+  labelText: {
+    color: '#fff',
+    fontSize: 12,
   },
 });
