@@ -46,34 +46,42 @@ const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   alt: ALT_IMAGES[index],
 }));
 
-const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
+const GridImage: React.FC<{ item: ImageItem; size: number }> = ({ item, size }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
   const [error, setError] = useState(false);
 
   const handlePress = () => {
     setUseAlt(prev => !prev);
-    setScale(prev => (prev < 2 ? parseFloat((prev * 1.2).toFixed(2)) : 1));
+    setScale(prev => {
+      const next = parseFloat((prev * 1.2).toFixed(2));
+      return next > 2 ? 2 : next;
+    });
   };
 
   const handleError = () => setError(true);
 
-  if (error) {
-    return (
-      <View style={styles.imageWrapper}>
-        <Text style={styles.errorText}>Gagal memuat gambar</Text>
-      </View>
-    );
-  }
-
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.imageWrapper}>
-      <Image
-        source={{ uri: useAlt ? item.alt : item.main }}
-        style={[styles.image, { transform: [{ scale }] }]}
-        resizeMode="cover"
-        onError={handleError}
-      />
+    <TouchableOpacity onPress={handlePress} style={{ width: size, height: size }}>
+      {error ? (
+        <View style={[styles.image, { width: size, height: size }]}>
+          <Text style={styles.errorText}>Gagal Memuat</Text>
+        </View>
+      ) : (
+        <Image
+          source={{ uri: useAlt ? item.alt : item.main }}
+          style={[
+            styles.image,
+            {
+              width: size,
+              height: size,
+              transform: [{ scale }],
+            },
+          ]}
+          resizeMode="cover"
+          onError={handleError}
+        />
+      )}
     </TouchableOpacity>
   );
 };
@@ -88,11 +96,8 @@ const App: React.FC = () => {
         data={IMAGE_LIST}
         numColumns={3}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
-            <GridImage item={item} />
-          </View>
-        )}
+        renderItem={({ item }) => <GridImage item={item} size={itemSize} />}
+        scrollEnabled={false}
         contentContainerStyle={styles.grid}
       />
     </SafeAreaView>
@@ -107,29 +112,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
   },
   grid: {
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 20,
   },
-  gridItem: {
+  image: {
     borderWidth: 1,
     borderColor: '#333',
-    backgroundColor: '#222',
-  },
-  imageWrapper: {
-    flex: 1,
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 4,
-  },
   errorText: {
-    color: '#ccc',
+    color: '#eee',
     fontSize: 12,
     textAlign: 'center',
-    padding: 5,
   },
 });
