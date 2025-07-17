@@ -16,7 +16,7 @@ type ImageItem = {
   alt: string;
 };
 
-// Gambar utama dan alternatif (9+9 = 18 gambar total)
+// Gambar utama dan alternatif (9+9)
 const MAIN_IMAGES: string[] = [
   'https://images.pexels.com/photos/1546166/pexels-photo-1546166.jpeg',
   'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg',
@@ -48,14 +48,17 @@ const IMAGE_LIST: ImageItem[] = MAIN_IMAGES.map((main, index) => ({
   alt: ALT_IMAGES[index],
 }));
 
-// Komponen individual gambar
+// Komponen gambar individual
 const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
   const [useAlt, setUseAlt] = useState(false);
   const [scale, setScale] = useState(1);
 
   const handlePress = () => {
-    setUseAlt((prev) => !prev);
-    setScale((prev) => (prev < 2 ? parseFloat((prev * 1.2).toFixed(2)) : 1));
+    setUseAlt(prev => !prev);
+    setScale(prev => {
+      const nextScale = parseFloat((prev * 1.2).toFixed(2));
+      return nextScale <= 2 ? nextScale : 1;
+    });
   };
 
   return (
@@ -72,7 +75,8 @@ const GridImage: React.FC<{ item: ImageItem }> = ({ item }) => {
 // Komponen utama
 const App: React.FC = () => {
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3;
+  const spacing = 8;
+  const itemSize = (screenWidth - spacing * 4) / 3;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,7 +85,7 @@ const App: React.FC = () => {
         numColumns={3}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
+          <View style={[styles.gridItem, { width: itemSize, height: itemSize, margin: spacing / 2 }]}>
             <GridImage item={item} />
           </View>
         )}
@@ -102,12 +106,12 @@ const styles = StyleSheet.create({
   grid: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    padding: 8,
   },
   gridItem: {
     backgroundColor: '#222',
-    borderWidth: 1,
-    borderColor: '#333',
+    borderRadius: 6,
+    overflow: 'hidden',
   },
   imageWrapper: {
     flex: 1,
@@ -115,6 +119,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 6,
   },
 });
